@@ -6,7 +6,7 @@
  using System.Linq;
  using System.Text;
 
-
+using DavonSupplyMod_KACWrapper;
  
 namespace DavonSupplyMod
 {
@@ -18,7 +18,10 @@ namespace DavonSupplyMod
 
         //display the time module has been static
 		[KSPField(isPersistant = false, guiActive = true, guiName = "Orbit Static Time", guiUnits = " days")]
-		public double staticTime;		
+		public double staticTime;
+
+		[KSPField(isPersistant = true, guiActive = false, guiName = "KAC alarm ID")]
+		public string KACalarmID;
 
 		//values to save orbit
 		[KSPField(isPersistant = true, guiActive = false)]
@@ -113,7 +116,10 @@ namespace DavonSupplyMod
             
         }
 
-
+		internal void Start()
+		{
+			KACWrapper.InitKACWrapper();
+		}
 
 	    [KSPEvent(name = "supply", isDefault = false, guiActive = true, guiName = "Supply")]
 		public void supply()
@@ -259,7 +265,8 @@ namespace DavonSupplyMod
 			request = request + ": ";
 			request = request + Planetarium.GetUniversalTime();
             fillrequestcontent();
-			status = "delivery requested";
+			checkdelivery ();
+			nextchecktime = Planetarium.GetUniversalTime() + 60;
 			//Update UI
 			UIcontrol();
 		}
@@ -286,6 +293,18 @@ namespace DavonSupplyMod
 			
 			request = "0";
 			status = "delivery cancelled";
+
+			if (KACWrapper.APIReady) {
+				if (KACalarmID != "") {
+					try {
+						KACWrapper.KAC.DeleteAlarm (KACalarmID);
+					}
+					catch {
+						// Don't crash if there was some problem deleting the alarm
+					}
+				}
+			}
+			KACalarmID = "";
 			
 			//Update UI
 			UIcontrol();
@@ -359,6 +378,28 @@ namespace DavonSupplyMod
 				if (requestduration > ((Planetarium.GetUniversalTime() - requesttime)/21600d))//check if delivery should be ready
 				{
 					status = "delivery in " + Math.Round((requestduration - (Planetarium.GetUniversalTime() - requesttime)/21600d),1) + " days";
+
+					if (KACWrapper.APIReady) {
+						string shipName = FlightGlobals.ActiveVessel.vesselName;
+
+						KACWrapper.KACAPI.KACAlarm a = null;
+						if (KACalarmID != "") {
+							a = KACWrapper.KAC.Alarms.FirstOrDefault (z => z.ID == KACalarmID);
+						} else {
+							KACalarmID = KACWrapper.KAC.CreateAlarm (
+								KACWrapper.KACAPI.AlarmTypeEnum.Raw,
+								"Davon delivery to "+shipName,
+								requesttime + requestduration*21600d
+							);
+							a = KACWrapper.KAC.Alarms.FirstOrDefault (z => z.ID == KACalarmID);
+							if (a != null) {
+								a.AlarmAction = KACWrapper.KACAPI.AlarmActionEnum.KillWarp;
+								a.AlarmMargin = 0;
+								a.VesselID = FlightGlobals.ActiveVessel.id.ToString ();
+								a.Notes = "Delivery of resources to " + shipName + " by Davon Tech Ltd";
+							}
+						}
+					}
 				}
 				else
 				{
