@@ -5,11 +5,13 @@
  using System.Collections.Generic;
  using System.Linq;
  using System.Text;
+ using UnityEngine;
 
 using DavonSupplyMod_KACWrapper;
- 
+
 namespace DavonSupplyMod
 {
+    [KSPAddon(KSPAddon.Startup.Flight, false)]
 	public class DavonRestrictedResourceSupplyModule : PartModule
 	{
 		//display status
@@ -381,7 +383,7 @@ namespace DavonSupplyMod
 
 					if (KACWrapper.APIReady) {
 						string shipName = FlightGlobals.ActiveVessel.vesselName;
-
+                    
 						KACWrapper.KACAPI.KACAlarm a = null;
 						if (KACalarmID != "") {
 							a = KACWrapper.KAC.Alarms.FirstOrDefault (z => z.ID == KACalarmID);
@@ -463,6 +465,7 @@ namespace DavonSupplyMod
 					request = "0";
                     requestContent = "";
 					status = "delivery completed";
+                    KACalarmID = "";
 				}
 			}
 			else
