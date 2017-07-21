@@ -86,7 +86,7 @@ namespace DavonSupplyMod
 
         double nextchecktime = 0;
 
-        public override void OnFixedUpdate()
+        public override void OnUpdate()
         {
             if (!HighLogic.LoadedSceneIsFlight)
                 return;
@@ -96,13 +96,11 @@ namespace DavonSupplyMod
                 nextchecktime = 0;
                 return;
             }
-            
             if (nextchecktime == 0)
             {
                 nextchecktime = Planetarium.GetUniversalTime() + 3;
                 return;
             }
-            
             if (Planetarium.GetUniversalTime() > nextchecktime)
             {
                 nextchecktime = Planetarium.GetUniversalTime() + 60;
@@ -572,7 +570,7 @@ namespace DavonSupplyMod
                     costperton = Convert.ToDouble(arrCostPerTon[runs + 1]);
                 }
             }
-            print("Cpt " + costperton);
+            //print("Cpt " + costperton);
             return ((costperton * resMass) + resCost);
 
         }
@@ -750,19 +748,19 @@ namespace DavonSupplyMod
 		void extend()
 		{
 			ModuleAnimateGeneric aModuleAnimateGeneric = new ModuleAnimateGeneric();
-			aModuleAnimateGeneric = part.Modules.OfType<ModuleAnimateGeneric>().FirstOrDefault();	
-			
-			if(aModuleAnimateGeneric.Events["Toggle"].guiName == "Extend" && aModuleAnimateGeneric.Events["Toggle"].guiActive == true)				
-			{
-				aModuleAnimateGeneric.Toggle();
-			}
+			aModuleAnimateGeneric = part.Modules.OfType<ModuleAnimateGeneric>().FirstOrDefault();
+            if (aModuleAnimateGeneric == null) { return; }
+            if (aModuleAnimateGeneric.Events["Toggle"].guiName == "Extend" && aModuleAnimateGeneric.Events["Toggle"].guiActive == true)
+            {
+                aModuleAnimateGeneric.Toggle();
+            }
 		}
 		
 		void retract()
 		{
 			ModuleAnimateGeneric aModuleAnimateGeneric = new ModuleAnimateGeneric();
 			aModuleAnimateGeneric = part.Modules.OfType<ModuleAnimateGeneric>().FirstOrDefault();	
-			
+			if (aModuleAnimateGeneric == null) { return; }
 			if(aModuleAnimateGeneric.Events["Toggle"].guiName == "Retract" && aModuleAnimateGeneric.Events["Toggle"].guiActive == true)				
 			{
 				aModuleAnimateGeneric.Toggle();
